@@ -47,7 +47,7 @@ public class MyOwnHashMap<K, V> {
     }
 
     public V get(K key) {
-        var index = (nodes.length - 1) & key.hashCode();
+        int index = (nodes.length - 1) & key.hashCode();
         if (index >= nodes.length) {
             return null;
         }
@@ -72,7 +72,7 @@ public class MyOwnHashMap<K, V> {
     }
 
     public void remove(K key) {
-        var index = (nodes.length - 1) & key.hashCode();
+        int index = (nodes.length - 1) & key.hashCode();
         if (index >= nodes.length) {
             throw new ArrayIndexOutOfBoundsException();
         }
@@ -96,6 +96,24 @@ public class MyOwnHashMap<K, V> {
         nodes[index] = null;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        for (Node<K, V> n : nodes) {
+            Node<K, V> node = n;
+            if (node != null) {
+                sb.append(node).append("\n");
+
+                while (node.hasNext()) {
+                    sb.append(node.next).append("\n");
+                    node = node.next;
+                }
+            }
+        }
+        return sb.toString();
+    }
+
     private void resize() {
         @SuppressWarnings("unchecked")
         Node<K, V>[] newArray = (Node<K, V>[]) new Node[nodes.length * 2];
@@ -105,38 +123,32 @@ public class MyOwnHashMap<K, V> {
         for (Node<K, V> kvNode : nodes) {
             Node<K, V> node = kvNode;
             if (node != null) {
-
-                int newIndex = (newArray.length - 1) & node.key.hashCode();
-                if (newArray[newIndex] != null) {
-                    Node<K, V> storedNode = newArray[newIndex];
-                    while (storedNode.hasNext()) {
-                        storedNode = storedNode.next;
-                    }
-                    storedNode.setNext(node);
-                } else {
-                    newArray[newIndex] = node;
-                }
+                putNodeInNewArray(newArray, node);
 
                 while (node.hasNext()) {
                     previousNode = node;
                     node = node.next;
                     previousNode.setNext(null);
-
-                    newIndex = (newArray.length - 1) & node.key.hashCode();
-                    if (newArray[newIndex] != null) {
-                        Node<K, V> storedNode = newArray[newIndex];
-                        while (storedNode.hasNext()) {
-                            storedNode = storedNode.next;
-                        }
-                        storedNode.setNext(node);
-                    } else {
-                        newArray[newIndex] = node;
-                    }
+                    putNodeInNewArray(newArray, node);
                 }
             }
         }
 
         nodes = newArray;
+    }
+
+    private void putNodeInNewArray(Node<K, V>[] newArray, Node<K, V> node) {
+        int newIndex;
+        newIndex = (newArray.length - 1) & node.key.hashCode();
+        if (newArray[newIndex] != null) {
+            Node<K, V> storedNode = newArray[newIndex];
+            while (storedNode.hasNext()) {
+                storedNode = storedNode.next;
+            }
+            storedNode.setNext(node);
+        } else {
+            newArray[newIndex] = node;
+        }
     }
 
     private boolean checkResize() {
@@ -153,7 +165,6 @@ public class MyOwnHashMap<K, V> {
         }
         return count / (float) nodes.length > loadFactor;
     }
-
 
     private static class Node<K, V> {
         private final K key;
@@ -178,23 +189,5 @@ public class MyOwnHashMap<K, V> {
         public String toString() {
             return key + "=" + value;
         }
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-
-        for (Node<K, V> n : nodes) {
-            Node<K, V> node = n;
-            if (node != null) {
-                sb.append(node).append("\n");
-
-                while (node.hasNext()) {
-                    sb.append(node.next).append("\n");
-                    node = node.next;
-                }
-            }
-        }
-        return sb.toString();
     }
 }
